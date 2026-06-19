@@ -1,0 +1,8 @@
+[package]
+name = "turso-geojson"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+mimalloc = "0.1.52"
+turso_ext = "0.6.1"
