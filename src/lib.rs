@@ -10,7 +10,20 @@ register_extension! {
 #[derive(Debug, VTabModuleDerive, Default)]
 struct GeoJsonModule;
 
-impl GeoJsonModule {}
+impl GeoJsonModule {
+    fn parse_arg(arg: &Value) -> Result<(&str, &str), ResultCode> {
+        if let Some(text) = arg.to_text() {
+            let mut split = text.splitn(2, '=');
+            let name = split.next();
+            let value = split.next();
+            if name.is_none() || value.is_none() {
+                return Err(ResultCode::InvalidArgs);
+            }
+            return Ok((name.unwrap(), value.unwrap()));
+        }
+        Err(ResultCode::InvalidArgs)
+    }
+}
 
 impl VTabModule for GeoJsonModule {
     type Table = GeoJsonTable;
@@ -20,7 +33,32 @@ impl VTabModule for GeoJsonModule {
     const NAME: &'static str = "geojson";
 
     fn create(args: &[Value]) -> Result<(String, Self::Table), ResultCode> {
-        todo!()
+        if args.is_empty() {
+            return Err(ResultCode::InvalidArgs);
+        }
+        let mut filename = None;
+
+        for arg in args {
+            let (name, value) = Self::parse_arg(arg)?;
+            match name {
+                "filename" => {
+                    if filename.is_some() {
+                        return Err(ResultCode::InvalidArgs);
+                    }
+                    // Todo: parse/validate input
+                    filename = Some(value);
+                }
+                _ => return Err(ResultCode::InvalidArgs),
+            }
+        }
+
+        if filename.is_none() {
+            return Err(ResultCode::InvalidArgs);
+        }
+
+        let table = GeoJsonTable {};
+        let schema = "CREATE TABLE x()".to_string();
+        Ok((schema, table))
     }
 }
 
