@@ -1,3 +1,9 @@
+use std::{
+    fs::File,
+    io::{BufReader, Read},
+};
+
+use geojson::{FeatureReader, GeoJson};
 use turso_ext::{
     Connection, ResultCode, VTabCursor, VTabKind, VTabModule, VTabModuleDerive, VTable, Value,
     register_extension,
@@ -56,18 +62,37 @@ impl VTabModule for GeoJsonModule {
             return Err(ResultCode::InvalidArgs);
         }
 
-        let table = GeoJsonTable {};
+        let table = GeoJsonTable {
+            filename: Some(filename.unwrap().to_string()),
+        };
         let schema = "CREATE TABLE x()".to_string();
         Ok((schema, table))
     }
 }
 
-struct GeoJsonTable {}
+struct VGeoJsonReader {
+    reader: geojson::FeatureReader<BufReader<File>>,
+}
+struct GeoJsonTable {
+    filename: Option<String>,
+}
+impl GeoJsonTable {
+    fn new_reader(&self) -> Result<VGeoJsonReader, ResultCode> {
+        match &self.filename {
+            Some(path) => {
+                let file = File::open(path).map_err(|_| ResultCode::Error)?;
+                let reader = BufReader::new(file);
+                let geojson = FeatureReader::from_reader(reader);
+                Ok(VGeoJsonReader { reader: geojson })
+            }
+            None => Err(ResultCode::Internal),
+        }
+    }
+}
 
 impl VTable for GeoJsonTable {
     type Cursor = GeoJsonCursor;
 
-    // Stub for now
     type Error = ResultCode;
 
     fn open(&self, _conn: Option<std::sync::Arc<Connection>>) -> Result<Self::Cursor, Self::Error> {
