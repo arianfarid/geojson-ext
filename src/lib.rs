@@ -96,11 +96,27 @@ impl VTable for GeoJsonTable {
     type Error = ResultCode;
 
     fn open(&self, _conn: Option<std::sync::Arc<Connection>>) -> Result<Self::Cursor, Self::Error> {
-        todo!()
+        match self.new_reader() {
+            Ok(reader) => Ok(GeoJsonCursor::new(reader, self)),
+            Err(_) => Err(ResultCode::Error),
+        }
     }
 }
 
-struct GeoJsonCursor;
+struct GeoJsonCursor {
+    eof: bool,
+    reader: VGeoJsonReader,
+    row_number: usize,
+}
+impl GeoJsonCursor {
+    fn new(reader: VGeoJsonReader, table: &GeoJsonTable) -> Self {
+        GeoJsonCursor {
+            reader,
+            row_number: 0,
+            eof: false,
+        }
+    }
+}
 impl VTabCursor for GeoJsonCursor {
     type Error = ResultCode;
 
