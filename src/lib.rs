@@ -67,10 +67,19 @@ impl VTabModule for GeoJsonModule {
         let mut table = GeoJsonTable {
             filename: Some(filename.unwrap().to_string()),
         };
-        let schema = "CREATE TABLE x(
-
-            )"
-        .to_string();
+        let mut schema = "CREATE TABLE x(
+                fid INTEGER
+                geometry BLOB"
+            .to_string();
+        for (i, col) in columns.iter().enumerate() {
+            schema.push('"');
+            schema.push_str(col);
+            schema.push_str("\" TEXT");
+            if i < columns.len() - 1 {
+                schema.push_str(", ");
+            }
+        }
+        schema.push(')');
         Ok((schema, table))
     }
 }
