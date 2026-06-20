@@ -70,16 +70,8 @@ impl VTabModule for GeoJsonModule {
         let mut table = GeoJsonTable {
             filename: Some(filename.unwrap().to_string()),
         };
-        let reader = table.new_reader()?;
-        let mut keys: HashSet<String> = HashSet::new();
-        for feature in reader.reader.features() {
-            let feat = feature.map_err(|_| ResultCode::Error)?;
-            if let Some(properties) = feat.properties {
-                properties.keys().for_each(|k| {
-                    keys.insert(k.to_owned());
-                });
-            }
-        }
+
+        let keys = table.get_columns()?;
 
         for (i, col) in keys.iter().enumerate() {
             schema.push('"');
@@ -113,6 +105,20 @@ impl GeoJsonTable {
             }
             None => Err(ResultCode::Internal),
         }
+    }
+
+    fn get_columns(&mut self) -> Result<HashSet<String>, ResultCode> {
+        let reader = self.new_reader()?;
+        let mut keys: HashSet<String> = HashSet::new();
+        for feature in reader.reader.features() {
+            let feat = feature.map_err(|_| ResultCode::Error)?;
+            if let Some(properties) = feat.properties {
+                properties.keys().for_each(|k| {
+                    keys.insert(k.to_owned());
+                });
+            }
+        }
+        Ok(keys)
     }
 }
 
