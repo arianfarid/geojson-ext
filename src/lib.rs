@@ -81,12 +81,11 @@ impl VTabModule for GeoJsonModule {
             }
         }
 
-        // let mut columns: Vec<String> = Vec::new();
         for (i, col) in keys.iter().enumerate() {
             schema.push('"');
 
             schema.push_str(col);
-            // TODO: type inference
+            // TODO: type inference. this lazily evaluates to text
             schema.push_str("\" TEXT");
             if i < keys.len() - 1 {
                 schema.push_str(", ");
