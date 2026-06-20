@@ -1,4 +1,5 @@
 use std::{
+    collections::HashSet,
     fs::File,
     io::{BufReader, Read},
 };
@@ -62,20 +63,32 @@ impl VTabModule for GeoJsonModule {
             return Err(ResultCode::InvalidArgs);
         }
 
-        let mut columns: Vec<String> = Vec::new();
-
-        let mut table = GeoJsonTable {
-            filename: Some(filename.unwrap().to_string()),
-        };
         let mut schema = "CREATE TABLE x(
                 fid INTEGER
                 geometry BLOB"
             .to_string();
-        for (i, col) in columns.iter().enumerate() {
+        let mut table = GeoJsonTable {
+            filename: Some(filename.unwrap().to_string()),
+        };
+        let reader = table.new_reader()?;
+        let mut keys: HashSet<String> = HashSet::new();
+        for feature in reader.reader.features() {
+            let feat = feature.map_err(|_| ResultCode::Error)?;
+            if let Some(properties) = feat.properties {
+                properties.keys().for_each(|k| {
+                    keys.insert(k.to_owned());
+                });
+            }
+        }
+
+        // let mut columns: Vec<String> = Vec::new();
+        for (i, col) in keys.iter().enumerate() {
             schema.push('"');
+
             schema.push_str(col);
+            // TODO: type inference
             schema.push_str("\" TEXT");
-            if i < columns.len() - 1 {
+            if i < keys.len() - 1 {
                 schema.push_str(", ");
             }
         }
