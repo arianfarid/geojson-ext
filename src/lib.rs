@@ -62,10 +62,15 @@ impl VTabModule for GeoJsonModule {
             return Err(ResultCode::InvalidArgs);
         }
 
-        let table = GeoJsonTable {
+        let mut columns: Vec<String> = Vec::new();
+
+        let mut table = GeoJsonTable {
             filename: Some(filename.unwrap().to_string()),
         };
-        let schema = "CREATE TABLE x()".to_string();
+        let schema = "CREATE TABLE x(
+
+            )"
+        .to_string();
         Ok((schema, table))
     }
 }
@@ -125,18 +130,27 @@ impl VTabCursor for GeoJsonCursor {
     }
 
     fn rowid(&self) -> i64 {
-        todo!()
+        self.row_number as i64
     }
 
     fn column(&self, idx: u32) -> Result<Value, Self::Error> {
+        // if let Some(count) = self.column_count {
+        //     if idx >= count {
+        //         return Ok(Value::null);
+        //     }
+        // }
+        // let value = self.current_row.get(idx as usize)
+        // Ok(value)
         todo!()
     }
 
     fn eof(&self) -> bool {
-        todo!()
+        self.eof
     }
 
     fn next(&mut self) -> ResultCode {
-        todo!()
+        // Add logic to loop through data
+        self.row_number += 1;
+        ResultCode::OK
     }
 }
