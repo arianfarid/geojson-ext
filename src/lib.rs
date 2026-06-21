@@ -69,10 +69,10 @@ impl VTabModule for GeoJsonModule {
             .to_string();
         let mut table = GeoJsonTable {
             filename: Some(filename.unwrap().to_string()),
+            column_count: 0,
         };
 
         let keys = table.get_columns()?;
-
         for (i, col) in keys.iter().enumerate() {
             schema.push('"');
 
@@ -93,6 +93,7 @@ struct VGeoJsonReader {
 }
 struct GeoJsonTable {
     filename: Option<String>,
+    column_count: u32,
 }
 impl GeoJsonTable {
     fn new_reader(&self) -> Result<VGeoJsonReader, ResultCode> {
@@ -139,6 +140,7 @@ struct GeoJsonCursor {
     eof: bool,
     reader: VGeoJsonReader,
     row_number: usize,
+    column_count: u32,
 }
 impl GeoJsonCursor {
     fn new(reader: VGeoJsonReader, table: &GeoJsonTable) -> Self {
@@ -146,6 +148,7 @@ impl GeoJsonCursor {
             reader,
             row_number: 0,
             eof: false,
+            column_count: table.column_count,
         }
     }
 }
@@ -153,7 +156,8 @@ impl VTabCursor for GeoJsonCursor {
     type Error = ResultCode;
 
     fn filter(&mut self, args: &[Value], idx_info: Option<(&str, i32)>) -> ResultCode {
-        todo!()
+        self.row_number = 0;
+        ResultCode::OK
     }
 
     fn rowid(&self) -> i64 {
@@ -161,14 +165,12 @@ impl VTabCursor for GeoJsonCursor {
     }
 
     fn column(&self, idx: u32) -> Result<Value, Self::Error> {
-        // if let Some(count) = self.column_count {
-        //     if idx >= count {
-        //         return Ok(Value::null);
-        //     }
-        // }
+        if idx >= self.column_count  {
+            return Ok(Value::null());
+        }
+        Ok(Value::null())
         // let value = self.current_row.get(idx as usize)
         // Ok(value)
-        todo!()
     }
 
     fn eof(&self) -> bool {
